@@ -5,7 +5,7 @@
   md.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
   document.head.append(md);
 
-  // 2) Inject CSS overrides (including spinner styles)
+  // 2) Inject CSS overrides (including spinner & uncropped FAB icon)
   const css = `
     .n8n-chat-widget {
       --chat--color-primary: #e74266;
@@ -27,9 +27,7 @@
       display: none; flex-direction: column;
       overflow: hidden; z-index: 1002;
     }
-    .n8n-chat-widget .chat-container.open {
-      display: flex;
-    }
+    .n8n-chat-widget .chat-container.open { display: flex; }
 
     .n8n-chat-widget .brand-header {
       background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
@@ -39,113 +37,110 @@
     .n8n-chat-widget .brand-header img {
       height: 32px; width: auto; object-fit: contain;
     }
-    .n8n-chat-widget .brand-header span {
-      display: none !important;
-    }
+    .n8n-chat-widget .brand-header span { display: none !important; }
     .n8n-chat-widget .close-button {
-      position: absolute; right:12px; top:50%; transform: translateY(-50%);
+      position: absolute; right:12px; top:50%; transform:translateY(-50%);
       background:none; border:none; color:#fff; font-size:20px;
       cursor:pointer; opacity:0.8; transition:opacity 0.2s;
     }
-    .n8n-chat-widget .close-button:hover {
-      opacity: 1;
-    }
+    .n8n-chat-widget .close-button:hover { opacity:1; }
 
     .n8n-chat-widget .chat-messages {
-      flex: 1; overflow-y: auto;
-      padding: 8px 16px; display: flex;
-      flex-direction: column; gap: 8px;
-      background: transparent;
+      flex:1; overflow-y:auto;
+      padding:8px 16px; display:flex;
+      flex-direction:column; gap:8px;
+      background:transparent;
     }
 
     .n8n-chat-widget .chat-message {
-      max-width: 80%; padding: 4px 12px;
-      line-height: 1.5; word-wrap: break-word;
+      max-width:80%; padding:4px 12px;
+      line-height:1.5; word-wrap:break-word;
     }
     .n8n-chat-widget .chat-message.bot {
-      background: #fff; color: var(--chat--color-font);
-      border: 1px solid #e5e5e5; border-radius: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      align-self: flex-start;
+      background:#fff; color:var(--chat--color-font);
+      border:1px solid #e5e5e5; border-radius:16px;
+      box-shadow:0 2px 4px rgba(0,0,0,0.05);
+      align-self:flex-start;
     }
     .n8n-chat-widget .chat-message.user {
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
-      color: #fff; border-radius: 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      align-self: flex-end;
+      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      color:#fff; border-radius:16px;
+      box-shadow:0 2px 4px rgba(0,0,0,0.1);
+      align-self:flex-end;
     }
 
     /* Spinner */
     .n8n-chat-widget .chat-message.loading {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 8px !important;
-      align-self: flex-start;
-      display: flex; justify-content: center;
+      background:transparent!important;
+      border:none!important;
+      box-shadow:none!important;
+      padding:8px!important;
+      align-self:flex-start;
+      display:flex; justify-content:center;
     }
     .n8n-chat-widget .chat-message.loading::after {
-      content: "";
-      width: 16px; height: 16px;
-      border: 3px solid #f3f3f3;
+      content:""; width:16px; height:16px;
+      border:3px solid #f3f3f3;
       border-top-color: var(--chat--color-primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      border-radius:50%; animation:spin 1s linear infinite;
     }
     @keyframes spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
+      from { transform: rotate(0deg) }
+      to   { transform: rotate(360deg) }
     }
 
     .n8n-chat-widget .chat-input {
-      padding: 12px 16px; background: #fff;
-      border-top: 1px solid #e5e5e5;
-      display: flex; gap: 8px; align-items: center;
+      padding:12px 16px; background:#fff;
+      border-top:1px solid #e5e5e5;
+      display:flex; gap:8px; align-items:center;
     }
     .n8n-chat-widget .chat-input textarea {
-      flex: 1; height: 40px; padding: 0 12px;
-      line-height: 16px; border: 1px solid #e5e5e5;
-      border-radius: 20px; background: #fafafb;
-      font-size: 14px; color: var(--chat--color-font);
-      resize: none; outline: none;
+      flex:1; height:40px; padding:0 12px;
+      line-height:16px; border:1px solid #e5e5e5;
+      border-radius:20px; background:#fafafb;
+      font-size:14px; color:var(--chat--color-font);
+      resize:none; outline:none;
     }
     .n8n-chat-widget .chat-input textarea:placeholder-shown {
-      line-height: 40px;
+      line-height:40px;
     }
     .n8n-chat-widget .chat-input textarea::placeholder {
-      color: #999;
+      color:#999;
     }
     .n8n-chat-widget .chat-input button {
-      flex: 0 0 auto; height: 40px;
-      padding: 0 24px; border: none;
-      border-radius: 20px;
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
-      color: #fff; font-size: 14px;
-      font-weight: 500; cursor: pointer;
-      transition: transform 0.2s;
+      flex:0 0 auto; height:40px; padding:0 24px;
+      border:none; border-radius:20px;
+      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      color:#fff; font-size:14px; font-weight:500;
+      cursor:pointer; transition:transform 0.2s;
     }
     .n8n-chat-widget .chat-input button:hover {
-      transform: scale(1.05);
+      transform:scale(1.05);
     }
 
-    .n8n-chat-widget .chat-footer {
-      display: none !important;
-    }
+    .n8n-chat-widget .chat-footer { display:none!important; }
 
     .n8n-chat-widget .chat-toggle {
-      position: fixed; bottom: 20px; right: 20px;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
-      color: #fff; border: none; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1001; transition: transform 0.2s;
+      position:fixed; bottom:20px; right:20px;
+      width:56px; height:56px; border-radius:50%;
+      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      color:#fff; border:none; cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      display:flex; align-items:center; justify-content:center;
+      z-index:1001; transition:transform 0.2s;
+      overflow: visible;     /* ensure SVG won't be clipped */
     }
     .n8n-chat-widget .chat-toggle:hover {
-      transform: scale(1.05);
+      transform:scale(1.05);
     }
     .n8n-chat-widget .chat-toggle.position-left {
-      right: auto; left: 20px;
+      right:auto; left:20px;
+    }
+    /* enlarge SVG slot so the full icon shows */
+    .n8n-chat-widget .chat-toggle svg {
+      width:32px; height:32px;
+      /* no clipping */
+      overflow: visible;
     }
   `;
   const styleTag = document.createElement('style');
@@ -154,15 +149,15 @@
 
   // 3) Load Geist Sans font
   const fontLink = document.createElement('link');
-  fontLink.rel  = 'stylesheet';
+  fontLink.rel = 'stylesheet';
   fontLink.href = 'https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css';
   document.head.appendChild(fontLink);
 
-  // 4) Merge config & guard re-init
+  // 4) Merge config & prevent duplicate init
   const defaultConfig = {
-    webhook:  { url: '', route: '' },
-    branding: { logo: '', welcomeText: '' },
-    style:    { position: 'right' }
+    webhook:  { url:'', route:'' },
+    branding: { logo:'', welcomeText:'' },
+    style:    { position:'right' }
   };
   const cfg = window.ChatWidgetConfig
     ? {
@@ -183,7 +178,7 @@
   document.body.appendChild(root);
 
   const container = document.createElement('div');
-  container.className = `chat-container${cfg.style.position === 'left' ? ' position-left' : ''}`;
+  container.className = `chat-container${cfg.style.position==='left'?' position-left':''}`;
   root.appendChild(container);
 
   // Header
@@ -209,12 +204,15 @@
   `;
   container.appendChild(inputArea);
 
-  // Toggle
+  // FAB
   const toggle = document.createElement('button');
-  toggle.className = `chat-toggle${cfg.style.position === 'left' ? ' position-left' : ''}`;
+  toggle.className = `chat-toggle${cfg.style.position==='left'?' position-left':''}`;
   toggle.innerHTML = `
-    <svg viewBox="0 0 24 24" width="24" height="24">
-      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821…"/>
+    <svg viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.5 21.5l4.5-.838A9.955 9.955 0 
+        0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18c-1.476 0-2.886-.313-4.156-.878
+        l-3.156.586.586-3.156A7.962 7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 
+        8-8 8z"/>
     </svg>
   `;
   root.appendChild(toggle);
@@ -226,7 +224,7 @@
 
   function renderBubble(txt, bot) {
     const d = document.createElement('div');
-    d.className = 'chat-message ' + (bot ? 'bot' : 'user');
+    d.className = 'chat-message ' + (bot?'bot':'user');
     if (window.marked) d.innerHTML = marked.parse(txt);
     else d.textContent = txt;
     messages.appendChild(d);
@@ -249,8 +247,8 @@
     };
     try {
       const res = await fetch(cfg.webhook.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -272,14 +270,14 @@
   });
   closeBtn.addEventListener('click', () => container.classList.remove('open'));
   sendBtn.addEventListener('click', () => {
-    const text = ta.value.trim();
-    if (text) sendMessage(text);
+    const txt = ta.value.trim();
+    if (txt) sendMessage(txt);
   });
-  ta.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  ta.addEventListener('keypress', e => {
+    if (e.key==='Enter' && !e.shiftKey) {
       e.preventDefault();
-      const text = ta.value.trim();
-      if (text) sendMessage(text);
+      const txt = ta.value.trim();
+      if (txt) sendMessage(txt);
     }
   });
 })();
