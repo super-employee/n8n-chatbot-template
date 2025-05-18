@@ -5,11 +5,11 @@
   md.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
   document.head.append(md);
 
-  // 2) Inject CSS overrides (including spinner & uncropped FAB icon)
+  // 2) Inject CSS overrides (with updated blues)
   const css = `
     .n8n-chat-widget {
-      --chat--color-primary: #e74266;
-      --chat--color-secondary: #db4061;
+      --chat--color-primary: #223651;
+      --chat--color-secondary: #1a2b44;
       --chat--color-background: #fafafb;
       --chat--color-font: #333333;
       font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
@@ -27,10 +27,16 @@
       display: none; flex-direction: column;
       overflow: hidden; z-index: 1002;
     }
-    .n8n-chat-widget .chat-container.open { display: flex; }
+    .n8n-chat-widget .chat-container.open {
+      display: flex;
+    }
 
     .n8n-chat-widget .brand-header {
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       height: 48px; padding: 0 16px;
       display: flex; align-items: center; position: relative;
     }
@@ -63,7 +69,11 @@
       align-self:flex-start;
     }
     .n8n-chat-widget .chat-message.user {
-      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color:#fff; border-radius:16px;
       box-shadow:0 2px 4px rgba(0,0,0,0.1);
       align-self:flex-end;
@@ -110,7 +120,11 @@
     .n8n-chat-widget .chat-input button {
       flex:0 0 auto; height:40px; padding:0 24px;
       border:none; border-radius:20px;
-      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color:#fff; font-size:14px; font-weight:500;
       cursor:pointer; transition:transform 0.2s;
     }
@@ -123,24 +137,21 @@
     .n8n-chat-widget .chat-toggle {
       position:fixed; bottom:20px; right:20px;
       width:56px; height:56px; border-radius:50%;
-      background:linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color:#fff; border:none; cursor:pointer;
       box-shadow:0 4px 12px rgba(0,0,0,0.1);
       display:flex; align-items:center; justify-content:center;
       z-index:1001; transition:transform 0.2s;
-      overflow: visible;     /* ensure SVG won't be clipped */
+      overflow:visible;
     }
-    .n8n-chat-widget .chat-toggle:hover {
-      transform:scale(1.05);
-    }
-    .n8n-chat-widget .chat-toggle.position-left {
-      right:auto; left:20px;
-    }
-    /* enlarge SVG slot so the full icon shows */
+    .n8n-chat-widget .chat-toggle:hover { transform:scale(1.05); }
+    .n8n-chat-widget .chat-toggle.position-left { right:auto; left:20px; }
     .n8n-chat-widget .chat-toggle svg {
-      width:32px; height:32px;
-      /* no clipping */
-      overflow: visible;
+      width:32px; height:32px; overflow:visible;
     }
   `;
   const styleTag = document.createElement('style');
