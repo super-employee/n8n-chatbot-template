@@ -1,14 +1,152 @@
 // chat-widget.js
 ;(function() {
   // ────────────────────────────────────────────────────────────────────────────
-  // 1) Inject custom CSS
+  // 1) Inject all needed CSS
   // ────────────────────────────────────────────────────────────────────────────
   const css = `
-    /* …all your existing rules… */
+    .n8n-chat-widget {
+      --chat--color-primary: #e74266;
+      --chat--color-secondary: #db4061;
+      --chat--color-background: #fafafb;
+      --chat--color-font: #333333;
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      z-index: 1000;
+    }
 
-    /* Input & bubbles, etc. (unchanged) */
+    /* Chat container hidden by default */
+    .n8n-chat-widget .chat-container {
+      display: none;
+      width: 380px;
+      height: 600px;
+      margin: 0 20px 20px 0;
+      background: var(--chat--color-background);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border: 1px solid #e5e5e5;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Show when .open is added */
+    .n8n-chat-widget .chat-container.open {
+      display: flex;
+    }
 
-    /* Toggle button styling */
+    /* Header (logo only) */
+    .n8n-chat-widget .brand-header {
+      background: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .n8n-chat-widget .brand-header img {
+      width: 24px;
+      height: 24px;
+    }
+    .n8n-chat-widget .brand-header span {
+      display: none;
+    }
+    .n8n-chat-widget .close-button {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .n8n-chat-widget .close-button:hover {
+      opacity: 1;
+    }
+
+    /* Messages pane */
+    .n8n-chat-widget .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: transparent;
+    }
+    .n8n-chat-widget .chat-message {
+      max-width: 80%;
+      padding: 12px 16px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+    .n8n-chat-widget .chat-message.bot {
+      background: #fff;
+      color: var(--chat--color-font);
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      align-self: flex-start;
+    }
+    .n8n-chat-widget .chat-message.user {
+      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      align-self: flex-end;
+    }
+
+    /* Input area */
+    .n8n-chat-widget .chat-input {
+      padding: 12px 16px;
+      background: #fff;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .n8n-chat-widget .chat-input textarea {
+      flex: 1;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 20px;
+      background: #fafafb;
+      font-size: 14px;
+      color: var(--chat--color-font);
+      resize: none;
+      outline: none;
+    }
+    .n8n-chat-widget .chat-input textarea::placeholder {
+      color: #999;
+    }
+    .n8n-chat-widget .chat-input button {
+      flex: 0 0 auto;
+      height: 40px;
+      padding: 0 24px;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .n8n-chat-widget .chat-input button:hover {
+      transform: scale(1.05);
+    }
+
+    /* Hide powered by */
+    .n8n-chat-widget .chat-footer {
+      display: none !important;
+    }
+
+    /* Toggle button */
     .n8n-chat-widget .chat-toggle {
       position: fixed;
       bottom: 20px;
@@ -107,12 +245,11 @@
   toggle.className = `chat-toggle${cfg.style.position === 'left' ? ' position-left' : ''}`;
   toggle.innerHTML = `
     <svg viewBox="0 0 24 24" width="24" height="24">
-      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487
-        3.53 1.338 5L2.5 21.5l4.5-.838A9.955 9.955 0
-        0012 22c5.523 0 10-4.477 10-10S17.523 2 12
-        2zm0 18c-1.476 0-2.886-.313-4.156-.878l-3.156.586.586-3.156A7.962
-        7.962 0 014 12c0-4.411 3.589-8 8-8s8
-        3.589 8 8-3.589 8-8 8z"/>
+      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.5 21.5l4.5-.838A9.955
+        9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18
+        c-1.476 0-2.886-.313-4.156-.878l-3.156.586.586-3.156A7.962
+        7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8
+        8-3.589 8-8 8z"/>
     </svg>
   `;
   root.appendChild(toggle);
@@ -164,10 +301,9 @@
     }
   }
 
-  // Events
   toggle.addEventListener('click', () => {
-    const isOpen = container.classList.toggle('open');
-    if (isOpen && !sessionId) {
+    const open = container.classList.toggle('open');
+    if (open && !sessionId) {
       sessionId = uuid();
       appendBot(cfg.branding.welcomeText || 'Hi, how can I help you today?');
     }
