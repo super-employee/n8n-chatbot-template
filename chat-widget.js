@@ -1,20 +1,30 @@
-(function(){
-  // 1) Load marked.js if needed
-  function ensureMarked(next){
-    if (window.marked) return next();
+// chat-widget.js
+;(function(){
+  //
+  // 1) INJECT MARKED.JS FOR MARKDOWN RENDERING
+  //
+  function loadMarked(cb) {
+    if (window.marked) return cb();
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-    s.onload = next;
+    s.onload = cb;
     document.head.appendChild(s);
   }
 
-  ensureMarked(initWidget);
+  loadMarked(initWidget);
 
-  function initWidget(){
-    // 2) Read & merge config
+  function initWidget() {
+    //
+    // 2) MERGE YOUR CONFIG
+    //
     const defaultConfig = {
       webhook: { url: '', route: '' },
-      branding: { logo: '', name: '', welcomeText: '', responseTimeText: '' },
+      branding: {
+        logo: '',
+        name: '',
+        welcomeText: '',
+        responseTimeText: ''
+      },
       style: {
         primaryColor: '#854fff',
         secondaryColor: '#6b3fd4',
@@ -24,23 +34,26 @@
       },
       showWelcomeScreen: true
     };
-
     const user = window.ChatWidgetConfig || {};
     const cfg = {
-      webhook:   { ...defaultConfig.webhook, ...user.webhook },
-      branding:  { ...defaultConfig.branding, ...user.branding },
-      style:     { ...defaultConfig.style, ...user.style },
-      showWelcomeScreen: user.showWelcomeScreen == false ? false : true
+      webhook: { ...defaultConfig.webhook, ...user.webhook },
+      branding: { ...defaultConfig.branding, ...user.branding },
+      style: { ...defaultConfig.style, ...user.style },
+      showWelcomeScreen: user.showWelcomeScreen === false ? false : true
     };
 
-    // 3) Inject Geist Sans font
+    //
+    // 3) INJECT GEIST FONT + CORE STYLES (INCLUDING SPINNER + NO FOOTER + BOX-SIZING)
+    //
     const fontLink = document.createElement('link');
     fontLink.rel = 'stylesheet';
     fontLink.href = 'https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/style.css';
     document.head.appendChild(fontLink);
 
-    // 4) Build & inject all CSS (including spinner + conditional welcome-hide + footer-hide)
-    let styles = `
+    const css = `
+      .n8n-chat-widget, .n8n-chat-widget * {
+        box-sizing: border-box;
+      }
       .n8n-chat-widget {
         --chat--color-primary: var(--n8n-chat-primary-color, ${cfg.style.primaryColor});
         --chat--color-secondary: var(--n8n-chat-secondary-color, ${cfg.style.secondaryColor});
@@ -61,15 +74,12 @@
         box-shadow: 0 8px 32px rgba(133,79,255,0.15);
         border: 1px solid rgba(133,79,255,0.2);
         overflow: hidden;
-        font-family: inherit;
-      }
-      .n8n-chat-widget .chat-container.position-left {
-        right: auto;
-        left: 20px;
-      }
-      .n8n-chat-widget .chat-container.open {
         display: flex;
         flex-direction: column;
+      }
+      .n8n-chat-widget .chat-container.position-left {
+        left: 20px;
+        right: auto;
       }
       .n8n-chat-widget .brand-header {
         padding: 16px;
@@ -78,6 +88,7 @@
         gap: 12px;
         border-bottom: 1px solid rgba(133,79,255,0.1);
         position: relative;
+        flex-shrink: 0;
       }
       .n8n-chat-widget .brand-header img {
         width: 32px;
@@ -145,9 +156,9 @@
         margin: 0;
       }
       .n8n-chat-widget .chat-interface {
+        flex: 1;
         display: none;
         flex-direction: column;
-        height: 100%;
       }
       .n8n-chat-widget .chat-interface.active {
         display: flex;
@@ -183,12 +194,29 @@
         align-self: flex-start;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       }
+      .n8n-chat-widget .chat-messages .loader {
+        display: inline-block;
+        flex: 0 0 auto;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--chat--color-primary);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        margin: 8px 0;
+        align-self: flex-start;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
       .n8n-chat-widget .chat-input {
         padding: 16px;
         background: var(--chat--color-background);
         border-top: 1px solid rgba(133,79,255,0.1);
         display: flex;
         gap: 8px;
+        flex-shrink: 0;
       }
       .n8n-chat-widget .chat-input textarea {
         flex: 1;
@@ -232,54 +260,38 @@
         justify-content: center;
         transition: transform 0.3s;
       }
-      .n8n-chat-widget .chat-toggle.position-left { right: auto; left: 20px; }
+      .n8n-chat-widget .chat-toggle.position-left { left:20px; right:auto; }
       .n8n-chat-widget .chat-toggle:hover { transform: scale(1.05); }
-      .n8n-chat-widget .chat-toggle svg {
-        width: 24px; height: 24px; fill: currentColor;
-      }
+      .n8n-chat-widget .chat-toggle svg { width:24px; height:24px; fill:currentColor; }
 
-      /* a) hide the powered-by link */
+      /* hide the built-in "Powered by" footer */
       .n8n-chat-widget .chat-footer { display: none; }
 
-      /* b) hide the welcome bubble if disabled */
+      /* if welcome is disabled, hide that pane entirely */
       ${cfg.showWelcomeScreen===false 
-        ? '.n8n-chat-widget .new-conversation { display: none !important; }' 
+        ? '.n8n-chat-widget .new-conversation { display: none !important; }'
         : ''}
-
-      /* c) loading spinner */
-      .n8n-chat-widget .chat-messages .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid var(--chat--color-primary);
-        border-radius: 50%;
-        width: 24px; height: 24px;
-        animation: spin 1s linear infinite;
-        margin: 8px 0;
-        align-self: flex-start;
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
     `;
-
     const styleTag = document.createElement('style');
-    styleTag.textContent = styles;
+    styleTag.textContent = css;
     document.head.appendChild(styleTag);
 
-    // 5) Build widget DOM
+    //
+    // 4) BUILD THE WIDGET DOM
+    //
     if (window.N8NChatWidgetInitialized) return;
     window.N8NChatWidgetInitialized = true;
     let sessionId = '';
 
-    const widget = document.createElement('div');
-    widget.className = 'n8n-chat-widget';
-    widget.style.setProperty('--n8n-chat-primary-color', cfg.style.primaryColor);
-    widget.style.setProperty('--n8n-chat-secondary-color', cfg.style.secondaryColor);
-    widget.style.setProperty('--n8n-chat-background-color', cfg.style.backgroundColor);
-    widget.style.setProperty('--n8n-chat-font-color', cfg.style.fontColor);
+    const widgetRoot = document.createElement('div');
+    widgetRoot.className = 'n8n-chat-widget';
+    widgetRoot.style.setProperty('--n8n-chat-primary-color', cfg.style.primaryColor);
+    widgetRoot.style.setProperty('--n8n-chat-secondary-color', cfg.style.secondaryColor);
+    widgetRoot.style.setProperty('--n8n-chat-background-color', cfg.style.backgroundColor);
+    widgetRoot.style.setProperty('--n8n-chat-font-color', cfg.style.fontColor);
 
     const container = document.createElement('div');
-    container.className = `chat-container${cfg.style.position==='left'? ' position-left':''}`;
+    container.className = `chat-container${cfg.style.position==='left'?' position-left':''}`;
     container.innerHTML = `
       <div class="brand-header">
         <img src="${cfg.branding.logo}" alt="${cfg.branding.name}"/>
@@ -305,49 +317,54 @@
         <div class="chat-footer"></div>
       </div>
     `;
-    widget.append(container);
+    widgetRoot.appendChild(container);
 
-    // toggle button
     const toggleBtn = document.createElement('button');
-    toggleBtn.className = `chat-toggle${cfg.style.position==='left'? ' position-left':''}`;
-    toggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12…"/></svg>';
-    widget.append(toggleBtn);
-    document.body.append(widget);
+    toggleBtn.className = `chat-toggle${cfg.style.position==='left'?' position-left':''}`;
+    toggleBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12…"/></svg>`;
+    widgetRoot.appendChild(toggleBtn);
 
-    // refs
+    document.body.appendChild(widgetRoot);
+
+    //
+    // 5) WIRING UP BEHAVIOR
+    //
     const newConv = container.querySelector('.new-conversation');
     const chatInt = container.querySelector('.chat-interface');
     const msgs    = container.querySelector('.chat-messages');
     const ta      = container.querySelector('textarea');
     const sendBtn = container.querySelector('button[type="submit"]');
     const newBtn  = container.querySelector('.new-chat-btn');
-    const closeBtns = container.querySelectorAll('.close-button');
+    const closeBtn = container.querySelectorAll('.close-button');
 
-    // helpers
-    function uuid(){ return crypto.randomUUID(); }
+    function uuid() { return crypto.randomUUID(); }
+
     function appendUser(txt){
       const d = document.createElement('div');
       d.className = 'chat-message user';
       d.textContent = txt;
-      msgs.append(d);
+      msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
     }
     function appendBot(txt){
-      if (!txt?.trim()) return;      // skip empty
+      if (!txt?.trim()) return;
       const d = document.createElement('div');
       d.className = 'chat-message bot';
-      d.innerHTML = window.marked.parse(txt);
-      msgs.append(d);
+      d.innerHTML = marked.parse(txt);
+      msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
     }
 
-    // start conversation
     async function startConversation(){
       sessionId = uuid();
+      // hide the very first header + welcome pane
+      const firstHeader = container.querySelector(':scope > .brand-header');
+      if (firstHeader) firstHeader.style.display = 'none';
+
       newConv.style.display = 'none';
       chatInt.classList.add('active');
       try {
-        const r = await fetch(cfg.webhook.url, {
+        const res = await fetch(cfg.webhook.url, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify([{
@@ -356,26 +373,25 @@
             route: cfg.webhook.route
           }])
         });
-        const data = await r.json();
+        const data = await res.json();
         if (Array.isArray(data) && data[0].output) appendBot(data[0].output);
-      } catch(e){ console.error(e) }
+      } catch(e){ console.error(e); }
     }
 
-    // send user message
     async function sendMessage(){
       const text = ta.value.trim();
-      if(!text) return;
+      if (!text) return;
       appendUser(text);
       ta.value = '';
 
-      // show spinner
+      // show loader
       const loader = document.createElement('div');
       loader.className = 'loader';
-      msgs.append(loader);
+      msgs.appendChild(loader);
       msgs.scrollTop = msgs.scrollHeight;
 
       try {
-        const r = await fetch(cfg.webhook.url, {
+        const res = await fetch(cfg.webhook.url, {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({
@@ -385,9 +401,9 @@
             chatInput: text
           })
         });
-        const resp = await r.json();
+        const resp = await res.json();
         loader.remove();
-        const out = Array.isArray(resp) ? resp[0].output : resp.output;
+        const out = Array.isArray(resp)? resp[0].output : resp.output;
         appendBot(out);
       } catch(err){
         console.error(err);
@@ -395,18 +411,23 @@
       }
     }
 
-    // events
+    // open/close
     toggleBtn.addEventListener('click', ()=>{
       const isOpen = container.classList.toggle('open');
-      if (isOpen && cfg.showWelcomeScreen===false && !chatInt.classList.contains('active')) {
+      if (isOpen && !cfg.showWelcomeScreen) {
         startConversation();
       }
     });
     newBtn.addEventListener('click', startConversation);
     sendBtn.addEventListener('click', sendMessage);
-    ta.addEventListener('keypress', e=>{
-      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+    ta.addEventListener('keypress', e => {
+      if (e.key==='Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
-    closeBtns.forEach(b=> b.addEventListener('click', ()=> container.classList.remove('open')));
+    closeBtn.forEach(b=> b.addEventListener('click', ()=>{
+      container.classList.remove('open');
+    }));
   }
 })();
