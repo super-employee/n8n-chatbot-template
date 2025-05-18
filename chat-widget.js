@@ -1,6 +1,4 @@
-<!-- Chat Widget Script -->
-<script>
-;(function(){
+(function(){
   // 1) Load marked.js if needed
   function ensureMarked(next){
     if (window.marked) return next();
@@ -412,4 +410,3 @@
     closeBtns.forEach(b=> b.addEventListener('click', ()=> container.classList.remove('open')));
   }
 })();
-</script>
