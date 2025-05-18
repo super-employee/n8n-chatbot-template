@@ -1,7 +1,14 @@
 // chat-widget.js
 ;(function() {
   // ────────────────────────────────────────────────────────────────────────────
-  // 1) Inject all needed CSS
+  // 1) Inject marked.js for Markdown rendering
+  // ────────────────────────────────────────────────────────────────────────────
+  const md = document.createElement('script');
+  md.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+  document.head.append(md);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // 2) Inject custom CSS
   // ────────────────────────────────────────────────────────────────────────────
   const css = `
     .n8n-chat-widget {
@@ -9,48 +16,53 @@
       --chat--color-secondary: #db4061;
       --chat--color-background: #fafafb;
       --chat--color-font: #333333;
-      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-        Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont,
+        'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
+        'Helvetica Neue', sans-serif;
       position: fixed;
       bottom: 0;
       right: 0;
       z-index: 1000;
     }
 
-    /* Chat container hidden by default */
+    /* Container */
     .n8n-chat-widget .chat-container {
-      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
       width: 380px;
       height: 600px;
-      margin: 0 20px 20px 0;
+      margin: 0;
       background: var(--chat--color-background);
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.08);
       border: 1px solid #e5e5e5;
+      display: none;
       flex-direction: column;
       overflow: hidden;
+      z-index: 1002; /* above the FAB */
     }
-    /* Show when .open is added */
     .n8n-chat-widget .chat-container.open {
       display: flex;
     }
 
-    /* Header (logo only) */
+    /* Header: pink gradient, white icon */
     .n8n-chat-widget .brand-header {
-      background: #fff;
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       padding: 12px 16px;
       display: flex;
       align-items: center;
       position: relative;
-      border-bottom: 1px solid #e5e5e5;
     }
     .n8n-chat-widget .brand-header img {
       width: 24px;
       height: 24px;
     }
-    .n8n-chat-widget .brand-header span {
-      display: none;
-    }
+    .n8n-chat-widget .brand-header span { display: none; }
     .n8n-chat-widget .close-button {
       position: absolute;
       right: 12px;
@@ -58,17 +70,17 @@
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: #666;
+      color: #fff;
       font-size: 20px;
       cursor: pointer;
-      opacity: 0.6;
+      opacity: 0.8;
       transition: opacity 0.2s;
     }
     .n8n-chat-widget .close-button:hover {
       opacity: 1;
     }
 
-    /* Messages pane */
+    /* Messages */
     .n8n-chat-widget .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -93,14 +105,18 @@
       align-self: flex-start;
     }
     .n8n-chat-widget .chat-message.user {
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color: #fff;
       border-radius: 16px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       align-self: flex-end;
     }
 
-    /* Input area */
+    /* Input */
     .n8n-chat-widget .chat-input {
       padding: 12px 16px;
       background: #fff;
@@ -130,7 +146,11 @@
       padding: 0 24px;
       border: none;
       border-radius: 20px;
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color: #fff;
       font-size: 14px;
       font-weight: 500;
@@ -141,12 +161,10 @@
       transform: scale(1.05);
     }
 
-    /* Hide powered by */
-    .n8n-chat-widget .chat-footer {
-      display: none !important;
-    }
+    /* Hide “Powered by” */
+    .n8n-chat-widget .chat-footer { display: none !important; }
 
-    /* Toggle button */
+    /* FAB */
     .n8n-chat-widget .chat-toggle {
       position: fixed;
       bottom: 20px;
@@ -154,7 +172,11 @@
       width: 56px;
       height: 56px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--chat--color-primary), var(--chat--color-secondary));
+      background: linear-gradient(
+        135deg,
+        var(--chat--color-primary),
+        var(--chat--color-secondary)
+      );
       color: #fff;
       border: none;
       cursor: pointer;
@@ -162,7 +184,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1001;
+      z-index: 1001; /* below container */
       transition: transform 0.2s;
     }
     .n8n-chat-widget .chat-toggle:hover {
@@ -178,7 +200,7 @@
   document.head.appendChild(styleTag);
 
   // ────────────────────────────────────────────────────────────────────────────
-  // 2) Load Geist Sans font
+  // 3) Load Geist Sans font
   // ────────────────────────────────────────────────────────────────────────────
   const fontLink = document.createElement('link');
   fontLink.rel  = 'stylesheet';
@@ -186,7 +208,7 @@
   document.head.appendChild(fontLink);
 
   // ────────────────────────────────────────────────────────────────────────────
-  // 3) Merge config & prevent re-init
+  // 4) Merge config & guard re-init
   // ────────────────────────────────────────────────────────────────────────────
   const defaultConfig = {
     webhook:   { url: '', route: '' },
@@ -205,16 +227,18 @@
   window.N8NChatWidgetInitialized = true;
 
   // ────────────────────────────────────────────────────────────────────────────
-  // 4) Build the DOM
+  // 5) Build DOM
   // ────────────────────────────────────────────────────────────────────────────
   let sessionId = '';
   function uuid() { return crypto.randomUUID(); }
 
   const root = document.createElement('div');
   root.className = 'n8n-chat-widget';
+  document.body.appendChild(root);
 
+  // Container
   const container = document.createElement('div');
-  container.className = `chat-container${cfg.style.position === 'left' ? ' position-left' : ''}`;
+  container.className = `chat-container${cfg.style.position==='left'?' position-left':''}`;
   root.appendChild(container);
 
   // Header
@@ -226,12 +250,12 @@
   `;
   container.appendChild(header);
 
-  // Messages pane
+  // Messages
   const messages = document.createElement('div');
   messages.className = 'chat-messages';
   container.appendChild(messages);
 
-  // Input area
+  // Input
   const inputArea = document.createElement('div');
   inputArea.className = 'chat-input';
   inputArea.innerHTML = `
@@ -240,46 +264,38 @@
   `;
   container.appendChild(inputArea);
 
-  // Toggle button
+  // FAB
   const toggle = document.createElement('button');
-  toggle.className = `chat-toggle${cfg.style.position === 'left' ? ' position-left' : ''}`;
+  toggle.className = `chat-toggle${cfg.style.position==='left'?' position-left':''}`;
   toggle.innerHTML = `
     <svg viewBox="0 0 24 24" width="24" height="24">
-      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.5 21.5l4.5-.838A9.955
-        9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18
-        c-1.476 0-2.886-.313-4.156-.878l-3.156.586.586-3.156A7.962
-        7.962 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8
-        8-3.589 8-8 8z"/>
+      <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 1.821…"/>
     </svg>
   `;
   root.appendChild(toggle);
-  document.body.appendChild(root);
 
   // ────────────────────────────────────────────────────────────────────────────
-  // 5) Wire up behavior
+  // 6) Behavior & Markdown
   // ────────────────────────────────────────────────────────────────────────────
   const textarea = inputArea.querySelector('textarea');
   const sendBtn  = inputArea.querySelector('button');
   const closeBtn = header.querySelector('.close-button');
 
-  function appendBot(text) {
-    if (!text.trim()) return;
+  function renderBubble(text, isBot) {
     const div = document.createElement('div');
-    div.className = 'chat-message bot';
-    div.textContent = text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
-  function appendUser(text) {
-    const div = document.createElement('div');
-    div.className = 'chat-message user';
-    div.textContent = text;
+    div.className = `chat-message ${isBot?'bot':'user'}`;
+    // use marked if available
+    if (window.marked) {
+      div.innerHTML = marked.parse(text);
+    } else {
+      div.textContent = text;
+    }
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
   }
 
   async function sendMessage(text) {
-    appendUser(text);
+    renderBubble(text, false);
     textarea.value = '';
     const payload = {
       action: 'sendMessage',
@@ -288,36 +304,34 @@
       chatInput: text
     };
     try {
-      const res = await fetch(cfg.webhook.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res  = await fetch(cfg.webhook.url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       });
       const data = await res.json();
       const out  = Array.isArray(data) ? data[0].output : data.output;
-      appendBot(out);
-    } catch(err) {
-      console.error(err);
-    }
+      renderBubble(out, true);
+    } catch(e){ console.error(e); }
   }
 
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', ()=>{
     const open = container.classList.toggle('open');
     if (open && !sessionId) {
       sessionId = uuid();
-      appendBot(cfg.branding.welcomeText || 'Hi, how can I help you today?');
+      renderBubble(cfg.branding.welcomeText || 'Hi, how can I help you today?', true);
     }
   });
-  closeBtn.addEventListener('click', () => container.classList.remove('open'));
-  sendBtn.addEventListener('click', () => {
+  closeBtn.addEventListener('click', ()=>container.classList.remove('open'));
+  sendBtn.addEventListener('click', ()=>{
     const txt = textarea.value.trim();
-    if (txt) sendMessage(txt);
+    if(txt) sendMessage(txt);
   });
-  textarea.addEventListener('keypress', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  textarea.addEventListener('keypress', e=>{
+    if(e.key==='Enter' && !e.shiftKey){
       e.preventDefault();
       const txt = textarea.value.trim();
-      if (txt) sendMessage(txt);
+      if(txt) sendMessage(txt);
     }
   });
 })();
