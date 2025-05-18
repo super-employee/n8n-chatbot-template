@@ -75,7 +75,7 @@
     /* Bubbles: reduced vertical padding */
     .n8n-chat-widget .chat-message {
       max-width: 80%;
-      padding: 4px 12px;
+      padding: 0px 12px;
       line-height: 1.5;
       word-wrap: break-word;
     }
